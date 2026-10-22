@@ -1,27 +1,21 @@
 import { flagParser } from './flagParser'
+import { start } from '../index'
 
 function run() {
-  const args = process.argv.slice(2);
-  const flags = flagParser(args);
-  
+  const args = process.argv.slice(2)
+  const flags = flagParser(args)
+
   if (flags.clearCache) {
-    console.log('Clearing cache...');
-    return;
+    console.log('Clearing cache...')
+    return
   }
-  
-  if (flags.port) {
-    console.log(`Starting proxy on port ${flags.port}`);
-  }
-  
-  if (flags.origin) {
-    console.log(`Proxying to origin: ${flags.origin}`);
-  }
-  
-  console.log('Running caching-proxy');
+
+  const port = flags.port ?? 3000
+  start(port)
 }
 
 if (require.main === module) {
-  run();
+  run()
 }
 
-export default run;
+export default run

@@ -1,9 +1,31 @@
-import { Hono } from 'hono'
+import app from './app'
+import { flagParser } from './utils/flagParser'
 
-const app = new Hono()
+let server: Bun.Server | null = null
 
-app.get('/', (c) => {
-  return c.text('Hello Hono!')
-})
+export function start(port: number): void {
+  server = Bun.serve({
+    port,
+    fetch: app.fetch,
+  })
 
-export default app
+  console.log(`Server running on http://localhost:${port}`)
+
+  const shutdown = (signal: string) => {
+    console.log(`\n${signal} received, shutting down gracefully...`)
+    if (server) {
+      server.stop()
+      server = null
+    }
+    process.exit(0)
+  }
+
+  process.on('SIGINT', () => shutdown('SIGINT'))
+  process.on('SIGTERM', () => shutdown('SIGTERM'))
+}
+
+// Auto-start when run directly as the entry point
+if (import.meta.main) {
+  const flags = flagParser(process.argv.slice(2))
+  start(flags.port ?? 3000)
+}
