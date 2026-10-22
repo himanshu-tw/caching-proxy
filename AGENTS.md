@@ -7,4 +7,3 @@
 ## Commands
 - Install deps: `bun install`
 - Dev server (hot reload): `bun run dev` (runs `bun run --hot src/index.ts`)
-- Type checking: `bun run --ts` (no `typecheck` script is defined; there is no lint/format/test script)
