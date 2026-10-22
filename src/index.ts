@@ -27,5 +27,11 @@ export function start(port: number): void {
 // Auto-start when run directly as the entry point
 if (import.meta.main) {
   const flags = flagParser(process.argv.slice(2))
+
+  if (flags.clearCache) {
+    console.log('Clearing cache...')
+    process.exit(0)
+  }
+
   start(flags.port ?? 3000)
 }
