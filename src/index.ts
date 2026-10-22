@@ -3,8 +3,7 @@ import { flagParser } from './utils/flagParser'
 
 let server: Bun.Server | null = null
 
-export function start(port: string): void {
-    port = parseInt(port)
+export function start(port: number): void {
     server = Bun.serve({
         port,
         fetch: app.fetch,
