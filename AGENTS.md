@@ -2,8 +2,8 @@
 
 ## Toolchain
 - Runtime/build tool: **Bun** (`bun.lock`, no `package-lock.json`/`yarn.lock`). Use `bun` commands, never `npm`/`yarn`/`node` to run scripts.
-- Single runtime dependency: `hono` (v4).
-- Source layout: `src/app.ts` exports the Hono `app`; `src/utils/flagParser.ts` parses CLI flags (`--port`, `--origin`, `--clear-cache`); `src/index.ts` is the server entry point.
+- Runtime dependencies: `hono` (v4) for the HTTP server, `axios` (v1) for upstream requests.
+- Source layout: `src/app.ts` holds the Hono `app` and the reverse-proxy handler; `src/utils/flagParser.ts` parses CLI flags (`--port`, `--origin`, `--clear-cache`); `src/index.ts` is the server entry point.
 
 ## Commands
 - Install deps: `bun install`
