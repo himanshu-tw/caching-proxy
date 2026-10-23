@@ -1,4 +1,4 @@
-import { expect, test, describe, beforeAll, afterAll } from "bun:test";
+import { expect, test, describe, beforeAll, afterAll, beforeEach } from "bun:test";
 import { configureProxyOrigin } from "../app.ts";
 import app from "../app.ts";
 import { clearAllCache, getCachedResponse } from "../service/db.ts";
