@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import axios from 'axios'
+import { getCachedResponse, setCachedResponse } from './service/db'
 
 const app = new Hono()
 
@@ -25,18 +26,30 @@ app.all('*', async (c) => {
   if (!proxyOrigin) {
     return c.text('Proxy not configured. Use --origin to set the target URL.', 404)
   }
-  
+
   // Build the target URL from the origin plus the incoming path/query.
   // c.req.url is already absolute, so it must be split before joining.
   const incoming = new URL(c.req.url)
   const target = new URL(`${incoming.pathname}${incoming.search}`, proxyOrigin).toString()
-  
+
+  // Only cache GET requests
+  if (c.req.method === 'GET') {
+    const cached = await getCachedResponse(target)
+    if (cached) {
+      return new Response(cached.body, {
+        status: cached.status,
+        statusText: cached.statusText,
+        headers: cached.headers,
+      })
+    }
+  }
+
   let body: any = undefined
   if (c.req.method !== 'GET' && c.req.method !== 'HEAD') {
     const arrayBuffer = await c.req.arrayBuffer()
     body = Buffer.from(arrayBuffer).toString('utf-8')
   }
-  
+
   // Forward request headers, dropping hop-by-hop and host (axios sets the target host)
   const headers: Record<string, string> = {}
   Object.entries(c.req.header() || {}).forEach(([key, value]) => {
@@ -45,7 +58,7 @@ app.all('*', async (c) => {
       headers[key] = value
     }
   })
-  
+
   try {
     const response = await axios({
       method: c.req.method,
@@ -56,7 +69,7 @@ app.all('*', async (c) => {
       // Forward any status code as-is instead of throwing on 4xx/5xx
       validateStatus: () => true,
     })
-    
+
     const responseHeaders: Record<string, string> = {}
     Object.entries(response.headers).forEach(([key, value]) => {
       const lower = key.toLowerCase()
@@ -66,8 +79,20 @@ app.all('*', async (c) => {
         responseHeaders[key] = Array.isArray(value) ? value.join(', ') : String(value)
       }
     })
-    
-    return new Response(response.data, {
+
+    const responseBody = Buffer.from(response.data)
+
+    // Cache the response for GET requests
+    if (c.req.method === 'GET') {
+      await setCachedResponse(target, {
+        body: responseBody.toString('base64'),
+        status: response.status,
+        statusText: response.statusText,
+        headers: responseHeaders,
+      }, 60)
+    }
+
+    return new Response(responseBody, {
       status: response.status,
       statusText: response.statusText,
       headers: responseHeaders,

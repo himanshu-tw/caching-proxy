@@ -1,12 +1,17 @@
 import app, { configureProxyOrigin } from './app'
 import { flagParser, ParsedFlags } from './utils/flagParser'
+import { connectRedis } from './config/redis'
+import { clearAllCache } from './service/db'
 
 let server: Bun.Server | null = null
 let flags: ParsedFlags = {}
 
-export function start(port: number): void {
+export async function start(port: number): Promise<void> {
   // Configure proxy origin from flags before starting the server
   configureProxyOrigin(flags.origin)
+  
+  // Connect to Redis
+  await connectRedis()
   
   server = Bun.serve({
     port,
@@ -37,8 +42,11 @@ if (import.meta.main) {
 
   if (flags.clearCache) {
     console.log('Clearing cache...')
+    await connectRedis()
+    const count = await clearAllCache()
+    console.log(`Cleared ${count} cache entries`)
     process.exit(0)
   }
 
-  start(flags.port ?? 3000)
+  await start(flags.port ?? 3000)
 }
