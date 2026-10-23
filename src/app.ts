@@ -36,10 +36,12 @@ app.all('*', async (c) => {
   if (c.req.method === 'GET') {
     const cached = await getCachedResponse(target)
     if (cached) {
-      return new Response(cached.body, {
+      const responseHeaders = new Headers(cached.headers)
+      responseHeaders.set('x-cache', 'HIT')
+      return new Response(Buffer.from(cached.body, 'base64'), {
         status: cached.status,
         statusText: cached.statusText,
-        headers: cached.headers,
+        headers: responseHeaders,
       })
     }
   }
@@ -90,6 +92,7 @@ app.all('*', async (c) => {
         statusText: response.statusText,
         headers: responseHeaders,
       }, 60)
+      responseHeaders['x-cache'] = 'MISS'
     }
 
     return new Response(responseBody, {
